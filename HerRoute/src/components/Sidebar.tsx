@@ -2,6 +2,7 @@ import { ArrowLeft, ChevronRight, ChevronLeft, ChevronDown, ChevronUp } from 'lu
 import { RouteOverview } from './RouteOverview';
 import { SegmentDetail } from './SegmentDetail';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { RouteOption } from '../types/route';
 
 interface SidebarProps {
   nightMode: boolean;
@@ -10,9 +11,70 @@ interface SidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
   onBackToOverview: () => void;
+  selectedRoute: RouteOption | null;
+  routeOptions: RouteOption[];
+  selectedRouteIndex: number;
+  onSelectRoute: (index: number) => void;
+  onFindSaferRoute: () => void;
+  routeLoading: boolean;
+  routeError: string | null;
+  routeMeta: { candidateCount: number; fastestId: string; safestId: string; recommendedId: string } | null;
 }
 
-export function Sidebar({ nightMode, view, selectedSegment, collapsed, onToggleCollapse, onBackToOverview }: SidebarProps) {
+export function Sidebar({
+  nightMode,
+  view,
+  selectedSegment,
+  collapsed,
+  onToggleCollapse,
+  onBackToOverview,
+  selectedRoute,
+  routeOptions,
+  selectedRouteIndex,
+  onSelectRoute,
+  onFindSaferRoute,
+  routeLoading,
+  routeError,
+  routeMeta,
+}: SidebarProps) {
+  // Get the segment data for SegmentDetail
+  const segmentData = selectedRoute && selectedSegment !== null
+    ? selectedRoute.segments.find(s => s.segmentIndex === selectedSegment)
+    : null;
+
+  const overviewContent = (
+    <RouteOverview
+      nightMode={nightMode}
+      selectedRoute={selectedRoute}
+      routeOptions={routeOptions}
+      selectedRouteIndex={selectedRouteIndex}
+      onSelectRoute={onSelectRoute}
+      onFindSaferRoute={onFindSaferRoute}
+      routeLoading={routeLoading}
+      routeError={routeError}
+      routeMeta={routeMeta}
+    />
+  );
+
+  const segmentContent = (
+    <div>
+      <div className={`sticky top-0 ${nightMode ? 'bg-gray-900/95 border-gray-700' : 'bg-pink-50/95 border-pink-100'} backdrop-blur-sm border-b px-4 sm:px-6 py-3 sm:py-4 z-10`}>
+        <button
+          onClick={onBackToOverview}
+          className="flex items-center gap-2 text-pink-600 hover:text-pink-700 font-medium text-sm sm:text-base"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Route Overview
+        </button>
+      </div>
+      <SegmentDetail
+        nightMode={nightMode}
+        segmentId={selectedSegment || 0}
+        segmentData={segmentData}
+      />
+    </div>
+  );
+
   return (
     <>
       {/* Toggle Button - Desktop (right side) */}
@@ -50,56 +112,41 @@ export function Sidebar({ nightMode, view, selectedSegment, collapsed, onToggleC
       </div>
 
       {/* Sidebar Panel - Desktop (right side) */}
-      <motion.div 
+      <motion.div
         className={`hidden md:flex relative ${nightMode ? 'bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 border-gray-700' : 'bg-gradient-to-b from-pink-50 via-white to-orange-50 border-pink-100'} border-l flex-col overflow-hidden`}
         initial={false}
-        animate={{ 
+        animate={{
           width: collapsed ? '0px' : 'min(400px, 90vw)',
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
       >
         <AnimatePresence>
           {!collapsed && (
-            <motion.div 
+            <motion.div
               className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              {view === 'overview' ? (
-                <RouteOverview nightMode={nightMode} />
-              ) : (
-                <div>
-                  <div className={`sticky top-0 ${nightMode ? 'bg-gray-900/95 border-gray-700' : 'bg-pink-50/95 border-pink-100'} backdrop-blur-sm border-b px-4 sm:px-6 py-3 sm:py-4 z-10`}>
-                    <button
-                      onClick={onBackToOverview}
-                      className="flex items-center gap-2 text-pink-600 hover:text-pink-700 font-medium text-sm sm:text-base"
-                    >
-                      <ArrowLeft className="w-4 h-4" />
-                      Back to Route Overview
-                    </button>
-                  </div>
-                  <SegmentDetail nightMode={nightMode} segmentId={selectedSegment || 7} />
-                </div>
-              )}
+              {view === 'overview' ? overviewContent : segmentContent}
             </motion.div>
           )}
         </AnimatePresence>
       </motion.div>
 
       {/* Sidebar Panel - Mobile (bottom sheet) */}
-      <motion.div 
+      <motion.div
         className={`md:hidden absolute left-0 right-0 bottom-0 ${nightMode ? 'bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 border-gray-700' : 'bg-gradient-to-b from-pink-50 via-white to-orange-50 border-pink-100'} border-t rounded-t-3xl shadow-2xl overflow-hidden z-20`}
         initial={false}
-        animate={{ 
+        animate={{
           height: collapsed ? '0px' : '65vh',
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
       >
         <AnimatePresence>
           {!collapsed && (
-            <motion.div 
+            <motion.div
               className="flex-1 overflow-y-auto h-full"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -110,23 +157,8 @@ export function Sidebar({ nightMode, view, selectedSegment, collapsed, onToggleC
               <div className="flex justify-center pt-3 pb-2">
                 <div className={`w-12 h-1.5 rounded-full ${nightMode ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
               </div>
-              
-              {view === 'overview' ? (
-                <RouteOverview nightMode={nightMode} />
-              ) : (
-                <div>
-                  <div className={`sticky top-0 ${nightMode ? 'bg-gray-900/95 border-gray-700' : 'bg-pink-50/95 border-pink-100'} backdrop-blur-sm border-b px-4 py-3 z-10`}>
-                    <button
-                      onClick={onBackToOverview}
-                      className="flex items-center gap-2 text-pink-600 hover:text-pink-700 font-medium text-sm"
-                    >
-                      <ArrowLeft className="w-4 h-4" />
-                      Back to Route Overview
-                    </button>
-                  </div>
-                  <SegmentDetail nightMode={nightMode} segmentId={selectedSegment || 7} />
-                </div>
-              )}
+
+              {view === 'overview' ? overviewContent : segmentContent}
             </motion.div>
           )}
         </AnimatePresence>

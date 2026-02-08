@@ -1,11 +1,27 @@
 import { useState } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, Loader2 } from "lucide-react";
 import HerRouteMap from "./HerRouteMap";
+import type { RouteOption, Coord } from "../types/route";
+
+// McMaster campus locations with real coordinates
+const LOCATIONS: Record<string, Coord> = {
+  "Wilson Hall": { lat: 43.26230, lng: -79.91706 },
+  "Ron Joyce Stadium": { lat: 43.26625, lng: -79.91703 },
+  "Mills Library": { lat: 43.26220, lng: -79.91950 },
+  "Tim Hortons - Campus": { lat: 43.26310, lng: -79.91860 },
+};
+
+// Default user origin (McMaster University center)
+const DEFAULT_ORIGIN: Coord = { lat: 43.2609, lng: -79.9192 };
 
 interface MapSectionProps {
   nightMode: boolean;
   routeGenerated: boolean;
-  onDestinationSelect: () => void;
+  routeLoading: boolean;
+  selectedRoute: RouteOption | null;
+  allRoutes: RouteOption[];
+  selectedRouteIndex: number;
+  onDestinationSelect: (origin: Coord, destination: Coord) => void;
   onClearRoute: () => void;
   onNodeClick: (nodeId: number) => void;
   onResetView: (resetFn: () => void) => void;
@@ -14,6 +30,10 @@ interface MapSectionProps {
 export function MapSection({
   nightMode,
   routeGenerated,
+  routeLoading,
+  selectedRoute,
+  allRoutes,
+  selectedRouteIndex,
   onDestinationSelect,
   onClearRoute,
   onNodeClick,
@@ -29,12 +49,21 @@ export function MapSection({
     { icon: '☕', name: 'Tim Hortons - Campus', distance: '0.2 km' },
   ];
 
+  const handleSelect = (name: string) => {
+    const destination = LOCATIONS[name];
+    if (destination) {
+      setSearchValue(name);
+      setShowSuggestions(false);
+      onDestinationSelect(DEFAULT_ORIGIN, destination);
+    }
+  };
+
   return (
     <div
       className="flex-1 relative h-full"
       style={{ position: 'relative', width: '100%', height: '100%' }}
     >
-      {/* Search Bar - CRITICAL: Must be AFTER map in DOM but with higher z-index */}
+      {/* Search Bar */}
       <div
         style={{
           position: 'absolute',
@@ -44,18 +73,21 @@ export function MapSection({
           zIndex: 1000,
           width: '90%',
           maxWidth: '600px',
-          pointerEvents: 'none', // Allow clicks to pass through wrapper
+          pointerEvents: 'none',
         }}
       >
         <div
           className={`rounded-xl shadow-2xl border ${nightMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             }`}
-          style={{ pointerEvents: 'auto' }} // Re-enable clicks on actual search bar
+          style={{ pointerEvents: 'auto' }}
         >
           {/* Search Input */}
           <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3">
-            <Search className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 ${nightMode ? 'text-gray-400' : 'text-gray-400'
-              }`} />
+            {routeLoading ? (
+              <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 text-pink-500 animate-spin" />
+            ) : (
+              <Search className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 ${nightMode ? 'text-gray-400' : 'text-gray-400'}`} />
+            )}
             <input
               type="text"
               value={searchValue}
@@ -63,13 +95,13 @@ export function MapSection({
               onFocus={() => setShowSuggestions(true)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && searchValue.trim()) {
-                  onDestinationSelect();
-                  setShowSuggestions(false);
+                  handleSelect(searchValue.trim());
                 }
               }}
               placeholder="Where do you want to go?"
               className={`flex-1 outline-none text-sm sm:text-base bg-transparent ${nightMode ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'
                 }`}
+              disabled={routeLoading}
             />
             {(searchValue || routeGenerated) && (
               <button
@@ -94,11 +126,7 @@ export function MapSection({
               {suggestions.map((suggestion, idx) => (
                 <button
                   key={idx}
-                  onClick={() => {
-                    setSearchValue(suggestion.name);
-                    onDestinationSelect();
-                    setShowSuggestions(false);
-                  }}
+                  onClick={() => handleSelect(suggestion.name)}
                   className={`w-full text-left px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2 sm:gap-3 transition-colors ${nightMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
                     } ${idx === suggestions.length - 1 ? '' : `border-b ${nightMode ? 'border-gray-700' : 'border-gray-100'}`}`}
                 >
@@ -121,11 +149,14 @@ export function MapSection({
         </div>
       </div>
 
-      {/* Leaflet Map - z-index: 1 */}
+      {/* Leaflet Map */}
       <div style={{ width: '100%', height: '100%', position: 'relative', zIndex: 1 }}>
         <HerRouteMap
           nightMode={nightMode}
           routeGenerated={routeGenerated}
+          selectedRoute={selectedRoute}
+          allRoutes={allRoutes}
+          selectedRouteIndex={selectedRouteIndex}
           onSegmentClick={(segmentId) => {
             onNodeClick(segmentId);
           }}

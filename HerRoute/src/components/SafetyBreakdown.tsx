@@ -1,22 +1,42 @@
 import { Lightbulb, Camera, AlertCircle, Star } from 'lucide-react';
+import type { LightingStats } from '../types/route';
 
 interface SafetyBreakdownProps {
   isSegment?: boolean;
   nightMode: boolean;
+  lightingStats?: LightingStats;
+  safetyScore?: number;
+  segmentLightingScore?: number;
+  segmentLampCount?: number;
 }
 
-export function SafetyBreakdown({ isSegment = false, nightMode }: SafetyBreakdownProps) {
-  const lightingScore = isSegment ? 68 : 85;
-  const cameraCount = isSegment ? 2 : 12;
-  const crimeRating = isSegment ? 'Medium' : 'Low';
-  const crimeScore = isSegment ? 65 : 85;
+export function SafetyBreakdown({
+  isSegment = false,
+  nightMode,
+  lightingStats,
+  safetyScore,
+  segmentLightingScore,
+  segmentLampCount,
+}: SafetyBreakdownProps) {
+  // Use real data from backend if available, otherwise fall back to defaults
+  const lightingScore = isSegment
+    ? (segmentLightingScore !== undefined ? Math.round(segmentLightingScore * 100) : 68)
+    : (lightingStats?.avgLightingScore ?? 85);
+
+  const lampCount = isSegment
+    ? (segmentLampCount !== undefined ? Math.round(segmentLampCount) : 3)
+    : (lightingStats?.totalLamps ?? 12);
+
+  const overallSafety = safetyScore ?? (isSegment ? 65 : 78);
+  const crimeRating = overallSafety >= 70 ? 'Low' : overallSafety >= 50 ? 'Medium' : 'High';
+  const crimeScore = overallSafety;
   const incidents = isSegment ? 1 : 2;
   const userRating = isSegment ? 3.8 : 4.2;
   const reviewCount = isSegment ? 12 : 47;
 
   return (
     <div className="space-y-4">
-      {/* Lighting */}
+      {/* Lighting - from database */}
       <div className={`${nightMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'} border rounded-lg p-4`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -35,7 +55,12 @@ export function SafetyBreakdown({ isSegment = false, nightMode }: SafetyBreakdow
           />
         </div>
         <div className={`text-sm ${nightMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          {isSegment ? '3 street lamps' : '12 street lamps'}
+          {lampCount} street lamp{lampCount !== 1 ? 's' : ''} {isSegment ? 'on segment' : 'along route'}
+          {lightingStats && !isSegment && (
+            <span className="ml-1">
+              ({lightingStats.darkSegments} dark, {lightingStats.wellLitSegments} well-lit)
+            </span>
+          )}
         </div>
       </div>
 
@@ -47,12 +72,12 @@ export function SafetyBreakdown({ isSegment = false, nightMode }: SafetyBreakdow
             <span className={`font-medium ${nightMode ? 'text-white' : 'text-gray-900'}`}>Cameras</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-bold text-green-600">Yes ✓</span>
+            <span className="font-bold text-green-600">Yes</span>
             <div className="w-3 h-3 rounded-full bg-green-500" />
           </div>
         </div>
         <div className={`text-sm ${nightMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          {cameraCount} cameras on {isSegment ? 'segment' : 'route'}
+          {isSegment ? 2 : 12} cameras on {isSegment ? 'segment' : 'route'}
         </div>
       </div>
 

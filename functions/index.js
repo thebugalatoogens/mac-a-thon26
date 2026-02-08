@@ -91,7 +91,7 @@ exports.getRoutes = onRequest(async (req, res) => {
 
     for (const route of routes) {
   const resp = await axios.post(
-    "${BACKEND_URL}/internal/safety/score-route",
+    `${BACKEND_URL}/internal/safety/score-route`,
     { coords: route.coords }
   );
 
