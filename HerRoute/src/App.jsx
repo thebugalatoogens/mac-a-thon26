@@ -246,6 +246,39 @@ function App() {
               </div>
             </div>
           )}
+
+          {/* Compact safety overlay — small card pinned to the left above the map */}
+          {!routeGenerated && !loading && (
+            <div
+              className={`absolute bottom-6 left-4 z-[5000] pointer-events-auto
+                rounded-xl shadow-lg border px-4 py-3 w-[240px]
+                ${nightMode
+                  ? 'bg-gray-800/90 text-white border-gray-700 backdrop-blur-sm'
+                  : 'bg-white/90 text-gray-900 border-gray-200 backdrop-blur-sm'
+                }
+              `}
+            >
+              <h3 className="text-sm font-bold mb-1">HerRoute</h3>
+              <p className={`text-xs mb-2 ${nightMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <strong>{roads.length}</strong> segments analyzed
+              </p>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="w-6 h-1 rounded" style={{ backgroundColor: '#ec4899' }}></span>
+                  <span>Safe (70-100) · {stats.safe}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="w-6 h-1 rounded" style={{ backgroundColor: '#fbcfe8' }}></span>
+                  <span>Moderate (40-69) · {stats.moderate}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="w-6 h-1 rounded" style={{ backgroundColor: '#9ca3af' }}></span>
+                  <span>Unsafe (0-39) · {stats.unsafe}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -268,74 +301,6 @@ function App() {
           </div>
         )}
 
-        {/* Floating BOX overlays that ALWAYS stay on top */}
-        {!routeGenerated && (
-          <>
-            {/* Top-right stats BOX (hard constrained so it never becomes a panel) */}
-            {!loading && (
-              <div className="fixed top-24 right-6 z-[9999] pointer-events-auto">
-                <div
-                  className={`rounded-2xl shadow-xl border p-5 w-[320px] max-w-[90vw]
-                    max-h-[40vh] overflow-auto
-                    ${nightMode
-                      ? 'bg-gray-800 text-white border-gray-700'
-                      : 'bg-white text-gray-900 border-gray-200'
-                    }
-                  `}
-                >
-                  <h2 className="text-xl font-bold mb-1">HerRoute</h2>
-                  <p className={`text-sm mb-4 ${nightMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    McMaster Safety Map
-                  </p>
-
-                  <div className={`rounded-lg p-3 ${nightMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                    <div className="text-sm">
-                      <strong className="text-lg">{roads.length}</strong> road segments analyzed
-                    </div>
-
-                    <div className="mt-3 pt-3 border-t border-gray-600 space-y-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ec4899' }}></span>
-                        <span>{stats.safe} safe routes</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbcfe8' }}></span>
-                        <span>{stats.moderate} caution areas</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#9ca3af' }}></span>
-                        <span>{stats.unsafe} avoid at night</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Bottom-right legend BOX */}
-            <div
-              className={`fixed bottom-6 right-6 z-[9999] w-[260px] max-w-[90vw] rounded-2xl shadow-xl border p-4
-                ${nightMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-200'}
-              `}
-            >
-              <strong className="block mb-3 text-sm">Safety Level</strong>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="w-10 h-1 rounded" style={{ backgroundColor: '#ec4899' }}></div>
-                  <span>Safe (70-100)</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="w-10 h-1 rounded" style={{ backgroundColor: '#fbcfe8' }}></div>
-                  <span>Moderate (40-69)</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="w-10 h-1 rounded" style={{ backgroundColor: '#9ca3af' }}></div>
-                  <span>Unsafe (0-39)</span>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
       </div>
     </div>
   )
